@@ -1,0 +1,6 @@
+{
+  "appId": "pf.brian.pehe",
+  "appName": "Pehe",
+  "webDir": "www",
+  "android": { "backgroundColor": "#072a36" }
+}
