@@ -17,6 +17,8 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 - Nuances : coupe-grave, adoucir, présence de la voix, largeur stéréo
 - **Mon profil d'écoute** : 4 questions A/B pour régler le son à ton goût
 - Encoche acouphène (musique encochée de Mamahu) sur toute ta musique
+- **Pad d'effets** : 18 effets (batterie, tō'ere, pahu, ukulélé, pū, klaxon, sirène, laser, scratch, vague, oiseau…) + tes propres effets (fichier ou enregistrement)
+- **Boucle rythmique** : Tō'ere (ori), Fenua, Boom-bap, Reggae, Disco, tempo réglable et « taper le tempo »
 
 ## Micro
 - Enregistrer sa voix, un son extérieur (micro brut) ou sa musique remixée ; les enregistrements sont gardés dans l'app
@@ -25,7 +27,7 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 - Sons apaisants, battements binauraux, anti-bourdon, outils acouphènes, respiration guidée
 
 ## Réglages
-- Skins : Tahiti, Forêt, Surf, Ville
+- Skins : Tahiti, Forêt, Surf, Ville, et **tes propres fonds d'écran** (photo de ta galerie, couleurs assorties automatiquement)
 - Appareils audio : casques et enceintes Bluetooth détectés, pause à la déconnexion, accès à l'association Bluetooth
 - Installation et mises à jour depuis GitHub
 
