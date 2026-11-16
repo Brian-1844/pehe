@@ -9,6 +9,8 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 - **Bibliothèque** : Toutes, Favoris, Lues en dernier, Plus écoutées, Mes enregistrements, et tes **playlists** (créer, renommer, supprimer, réordonner)
 - **Partager** une chanson ou un enregistrement (WhatsApp, Messenger, Bluetooth…)
 - **Scratch** : fais tourner le disque au doigt (avant, arrière, arrêt), touche-le pour lecture/pause
+- **Son auto** : volume égalisé et équilibre basses/aigus ajusté en continu
+- **Lecture en arrière-plan** : la musique continue écran éteint ou dans une autre app, avec commandes dans les notifications
 - Titre, artiste, album et pochette lus dans les tags ID3
 
 ## Son
@@ -29,7 +31,7 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 ## Réglages
 - Skins : Tahiti, Forêt, Surf, Ville, et **tes propres fonds d'écran** (photo de ta galerie, couleurs assorties automatiquement)
 - Appareils audio : casques et enceintes Bluetooth détectés, pause à la déconnexion, accès à l'association Bluetooth
-- Installation et mises à jour depuis GitHub
+- Installation depuis GitHub et **mise à jour dans l'app** avec barre de progression (téléchargement, puis écran d'installation d'Android)
 
 ## Télécharger l'APK
 À chaque modification sur `main`, GitHub construit l'APK tout seul : onglet **Releases**, fichier `Pehe.apk`.

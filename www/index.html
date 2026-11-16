@@ -249,6 +249,8 @@ body[data-skin=custom] .bgimg{display:block}
 .skin .px{position:absolute;top:4px;right:4px;min-width:30px;min-height:30px;border-radius:50%;background:#000a;color:#fff;font-size:16px}
 .skin.addsk{border-style:dashed;color:var(--mute);place-content:center}
 .skin.addsk i{display:grid;place-items:center;background:var(--panel);font-style:normal;font-size:28px}
+.upbar{height:14px;border-radius:7px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.upbar div{height:100%;width:0;background:linear-gradient(90deg,var(--lag),var(--acc));transition:width .2s}
 .pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .pad{position:relative;min-height:68px;border-radius:16px;color:#fff;font-weight:700;font-size:13px;line-height:1.2;padding:8px 4px;background:var(--pc,var(--lag));box-shadow:inset 0 -4px 0 #0003;transition:transform .06s,filter .06s;text-align:center;overflow-wrap:normal;hyphens:auto}
 .pad:active,.pad.hit{transform:scale(.94);filter:brightness(1.25)}
@@ -291,6 +293,7 @@ body[data-skin=custom] .bgimg{display:block}
 <symbol id="list" viewBox="0 0 24 24"><path d="M3 6h12v2H3zm0 5h12v2H3zm0 5h8v2H3zm14-5v6.3a2.5 2.5 0 1 0 2 2.4V13h3v-2z"/></symbol>
 <symbol id="eye" viewBox="0 0 24 24"><path d="M12 5C6 5 2 12 2 12s4 7 10 7 10-7 10-7-4-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></symbol>
 <symbol id="share" viewBox="0 0 24 24"><path d="M18 16a3 3 0 0 0-2.2 1l-7-4a3 3 0 0 0 0-2l7-4A3 3 0 1 0 15 5l-7 4a3 3 0 1 0 0 6l7 4a3 3 0 1 0 3-3z"/></symbol>
+<symbol id="auto" viewBox="0 0 24 24"><path d="M7 21H5V11h2zm4 0H9V4h2zm4 0h-2v-7h2zm4 0h-2V8h2zM21 3l-1 2-2 1 2 1 1 2 1-2 2-1-2-1z"/></symbol>
 <symbol id="mic" viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1a7 7 0 0 0 6-6.9z"/></symbol>
 <symbol id="gear" viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.7a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.7a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></symbol>
 <symbol id="bt" viewBox="0 0 24 24"><path d="M17.7 7.7 12 2h-1v7.6L6.4 5 5 6.4l5.6 5.6L5 17.6 6.4 19l4.6-4.6V22h1l5.7-5.7-4.3-4.3zM13 5.8l1.9 1.9L13 9.6zm1.9 10.5L13 18.2v-3.8z"/></symbol>
@@ -375,7 +378,8 @@ body[data-skin=custom] .bgimg{display:block}
         <h2 id="title">Ia ora na !</h2>
         <p id="artist">Ajoute tes chansons avec le bouton en haut, ou glisse-les ici.</p>
         <p id="pos" style="font-size:13px"></p>
-        <div class="acts2"><button class="pill" id="favbtn" aria-label="Favori"><svg><use href="#heart"/></svg><span>Favori</span></button><button class="pill" id="plbtn"><svg class="i"><use href="#list"/></svg>Playlist</button><button class="pill" id="shbtn"><svg class="i"><use href="#share"/></svg>Partager</button></div>
+        <div class="acts2"><button class="pill" id="favbtn" aria-label="Favori"><svg><use href="#heart"/></svg><span>Favori</span></button><button class="pill" id="plbtn"><svg class="i"><use href="#list"/></svg>Playlist</button><button class="pill" id="shbtn"><svg class="i"><use href="#share"/></svg>Partager</button><button class="pill" id="autobtn" title="Ajuste tout seul le volume et l'équilibre du son"><svg class="i"><use href="#auto"/></svg>Son auto</button></div>
+        <p id="autost" style="font-size:12px;margin:8px 0 0;color:#a6c9c8;min-height:1em"></p>
       </div>
       <canvas id="viz"></canvas>
       <div class="seek"><span id="cur">0:00</span><input id="bar" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="dur">0:00</span></div>
@@ -1405,26 +1409,102 @@ $('outr').onclick=refreshOuts;
 $('btpair').onclick=()=>{if(ML)ML.openBluetooth().catch(()=>toast('Ouvre les réglages Bluetooth du téléphone'));else toast('Disponible dans l\'app Android : installe-la depuis Réglages')};
 if(ML&&ML.addListener)ML.addListener('outputsChanged',d=>{if(tab==='set')refreshOuts();if(d.added)toast('Connecté : '+d.added);else if(d.removed){toast('Déconnecté : '+d.removed);if(d.headset&&!au.paused)au.pause()}});
 
-// --- Installer et mettre à jour ---
-let updInfo=null,updNew=null;
+// --- Installer et mettre à jour (téléchargement dans l'app) ---
+let updInfo=null,updNew=null,dl={state:'idle',done:0,total:0};
+const mb=b=>(b/1048576).toFixed(1).replace('.',',')+' Mo';
 function renderUpd(){
   if(!ML){$('upd').innerHTML=`<p class="cnote" style="margin:0">Installe Pehe sur ton Android : l'icône apparaîtra sur ton téléphone.</p><div class="brow"><a class="mb pri" href="${APK_URL}" style="min-height:46px;display:inline-flex;align-items:center;gap:8px;text-decoration:none"><svg class="i" style="width:20px;height:20px;fill:currentColor"><use href="#dl"/></svg>Installer l'app sur mon téléphone</a></div>
-  <p class="cnote">1. Touche le bouton sur ton téléphone · 2. Ouvre le fichier <b>Pehe.apk</b> téléchargé · 3. Autorise l'installation si Android le demande. Ensuite, les mises à jour se font depuis l'app, dans Réglages.</p>`;return}
-  $('upd').innerHTML=`<p class="cnote" style="margin:0">Version installée : <b>${updInfo?esc(updInfo.versionName):'…'}</b></p><div class="brow">${updNew?`<button class="mb pri" id="updgo" style="min-height:46px">Installer la version ${esc(updNew.v)}</button>`:''}<button class="mb" id="updck" style="min-height:46px">Vérifier les mises à jour</button></div><p class="cnote" id="updmsg">${updNew?'Une nouvelle version est prête. Après le téléchargement, ouvre le fichier pour l\'installer par-dessus : tes réglages sont gardés.':''}</p>`;
-  if($('updgo'))$('updgo').onclick=()=>ML.openUrl({url:updNew.url});
-  $('updck').onclick=()=>checkUpdate(true);
+  <p class="cnote">1. Touche le bouton sur ton téléphone · 2. Ouvre le fichier <b>Pehe.apk</b> téléchargé · 3. Autorise l'installation si Android le demande. Ensuite, les mises à jour se font directement dans l'app, dans Réglages.</p>`;return}
+  const pct=dl.total?Math.min(100,Math.round(dl.done/dl.total*100)):0;
+  let body='';
+  if(dl.state==='down')body=`<div class="upbar"><div style="width:${pct}%"></div></div><p class="cnote" style="margin:6px 0 0"><b>${pct} %</b> · ${mb(dl.done)}${dl.total?' sur '+mb(dl.total):''}</p><div class="brow"><button class="mb" id="updcancel" style="min-height:44px">Annuler</button></div>`;
+  else if(dl.state==='ready')body=`<div class="upbar"><div style="width:100%"></div></div><p class="cnote" style="margin:6px 0 0">Téléchargement terminé. Touche <b>Installer</b>, puis confirme sur l'écran d'Android. Pehe se ferme pendant l'installation : touche ensuite « Ouvrir ». Tes chansons, playlists et réglages sont gardés.</p><div class="brow"><button class="mb pri" id="updinst" style="min-height:46px">Installer maintenant</button></div>`;
+  else if(dl.state==='perm')body=`<p class="cnote" style="margin:0">Android demande ton accord : active <b>« Autoriser depuis cette source »</b> pour Pehe, reviens ici, puis touche Installer.</p><div class="brow"><button class="mb pri" id="updinst" style="min-height:46px">Installer maintenant</button></div>`;
+  else if(updNew)body=`<p class="cnote" style="margin:0">Nouvelle version <b>${esc(updNew.v)}</b> disponible${updNew.size?' ('+mb(updNew.size)+')':''}.</p><div class="brow"><button class="mb pri" id="updgo" style="min-height:46px">Mettre à jour maintenant</button></div>`;
+  $('upd').innerHTML=`<p class="cnote" style="margin:0 0 8px">Version installée : <b>${updInfo?esc(updInfo.versionName):'…'}</b></p>${body}${dl.state==='idle'?'<div class="brow"><button class="mb" id="updck" style="min-height:46px">Vérifier les mises à jour</button></div>':''}`;
+  if($('updgo'))$('updgo').onclick=startUpdate;
+  if($('updcancel'))$('updcancel').onclick=()=>ML.cancelUpdate();
+  if($('updinst'))$('updinst').onclick=installUpdate;
+  if($('updck'))$('updck').onclick=()=>checkUpdate(true);
 }
+async function startUpdate(){
+  if(!updNew||dl.state==='down')return;
+  dl={state:'down',done:0,total:updNew.size||0};renderUpd();
+  try{await ML.downloadUpdate({url:updNew.url,size:updNew.size||0});dl.state='ready';renderUpd();installUpdate()}
+  catch(e){dl={state:'idle',done:0,total:0};renderUpd();toast(e&&e.code==='CANCELLED'?'Mise à jour annulée':'Téléchargement impossible : vérifie ta connexion')}
+}
+async function installUpdate(){
+  try{const r=await ML.installUpdate();dl.state=r&&r.needPermission?'perm':'ready';renderUpd()}catch(e){dl.state='idle';renderUpd();toast('Relance la mise à jour')}
+}
+if(ML&&ML.addListener)ML.addListener('updateProgress',d=>{if(dl.state!=='down')return;dl.done=d.done;if(d.total)dl.total=d.total;if(tab==='set'){const b=document.querySelector('.upbar div'),pc=dl.total?Math.min(100,Math.round(dl.done/dl.total*100)):0;if(b){b.style.width=pc+'%';b.parentElement.nextElementSibling.innerHTML=`<b>${pc} %</b> · ${mb(dl.done)}${dl.total?' sur '+mb(dl.total):''}`}}});
 async function checkUpdate(manual){
   if(!ML)return;try{updInfo=updInfo||await ML.info()}catch(e){}
   try{const r=await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);if(!r.ok)throw 0;const j=await r.json();
     const n=parseInt(String(j.tag_name||'').split('.').pop(),10),asset=(j.assets||[]).find(a=>/\.apk$/i.test(a.name));
     ST.lastUpd=Date.now();save();
-    if(updInfo&&asset&&n>updInfo.versionCode){updNew={v:String(j.tag_name).replace(/^v/,''),url:asset.browser_download_url};if(!manual)toast('Mise à jour de Pehe disponible : va dans Réglages')}
+    if(updInfo&&asset&&n>updInfo.versionCode){updNew={v:String(j.tag_name).replace(/^v/,''),url:asset.browser_download_url,size:asset.size||0};
+      if(!manual)sheet(`<h4>Mise à jour de Pehe</h4><p>La version ${esc(updNew.v)} est prête${updNew.size?' ('+mb(updNew.size)+')':''}. Le téléchargement se fait dans l'app, avec une barre de progression.</p><button class="opt" data-s="close" id="updlater" style="justify-content:center;color:var(--mute)">Plus tard</button><button class="opt" id="updnow" style="justify-content:center;color:var(--acc);font-weight:700">Mettre à jour maintenant</button>`),setTimeout(()=>{const b=$('updnow');if(b)b.onclick=()=>{closeSheet();showTab('set');startUpdate()}},0)}
     else{updNew=null;if(manual)toast('Pehe est à jour')}
   }catch(e){if(manual)toast('Impossible de joindre GitHub : vérifie ta connexion')}
   if(tab==='set')renderUpd();
 }
 if(ML&&Date.now()-(ST.lastUpd||0)>864e5)setTimeout(()=>checkUpdate(false),4000);
+
+// --- Lecture en arrière-plan (app Android) ---
+let bgStopT=null;
+function bgSync(){
+  if(!ML||!ML.bgUpdate||!cur)return;clearTimeout(bgStopT);
+  ML.bgUpdate({title:cur.title,artist:cur.artist,playing:!au.paused}).catch(()=>{});
+  if(au.paused)bgStopT=setTimeout(()=>{if(au.paused)ML.bgStop().catch(()=>{})},10*60*1000);
+}
+['play','pause','loadedmetadata'].forEach(ev=>au.addEventListener(ev,()=>{if(!scr)bgSync()}));
+if(ML&&ML.addListener)ML.addListener('mediaAction',d=>{if(d.action==='toggle')toggle();else if(d.action==='next')step(1);else if(d.action==='prev')step(-1)});
+
+// --- Son auto : volume égalisé et équilibre du son ajusté en continu ---
+let autoOn=!!ST.auto,autoT=null,autoSt={g:0,lo:0,hi:0};
+function autoNodes(){
+  if(!ctx||N.agn)return;
+  const bq=(t,f)=>{const b=ctx.createBiquadFilter();b.type=t;b.frequency.value=f;return b};
+  N.alo=bq('lowshelf',120);N.ahi=bq('highshelf',6500);N.acomp=ctx.createDynamicsCompressor();N.agn=ctx.createGain();
+  N.aan=ctx.createAnalyser();N.aan.fftSize=2048;N.aan.smoothingTimeConstant=.85;
+  src.disconnect();src.connect(N.aan);src.connect(N.alo).connect(N.ahi).connect(N.acomp).connect(N.agn).connect(N.hpf);
+  autoApply(true);
+}
+function autoApply(now){
+  if(!N.agn)return;const t=ctx.currentTime,c=N.acomp;
+  if(autoOn){c.threshold.value=-22;c.knee.value=12;c.ratio.value=3;c.attack.value=.01;c.release.value=.25}
+  else{c.threshold.value=0;c.knee.value=0;c.ratio.value=1;autoSt={g:0,lo:0,hi:0}}
+  const tc=now?.05:.8;
+  N.agn.gain.setTargetAtTime(Math.pow(10,autoSt.g/20),t,tc);N.alo.gain.setTargetAtTime(autoSt.lo,t,tc);N.ahi.gain.setTargetAtTime(autoSt.hi,t,tc);
+}
+function autoTick(){
+  if(!autoOn||!N.aan||au.paused)return;
+  const td=new Float32Array(N.aan.fftSize);N.aan.getFloatTimeDomainData(td);let sum=0;for(const v of td)sum+=v*v;
+  const rms=10*Math.log10(sum/td.length+1e-12);if(rms<-55)return;
+  const fd=new Float32Array(N.aan.frequencyBinCount);N.aan.getFloatFrequencyData(fd);
+  const hz=ctx.sampleRate/N.aan.fftSize,band=(a,b)=>{let s=0,n=0;for(let i=Math.floor(a/hz);i<=Math.ceil(b/hz)&&i<fd.length;i++){s+=Math.pow(10,fd[i]/10);n++}return 10*Math.log10(s/n+1e-12)};
+  const lo=band(40,160),mid=band(300,2500),hi=band(5000,12000);
+  const k=.12,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  autoSt.g+=(cl(-17-rms,-6,8)-autoSt.g)*k;
+  autoSt.lo+=(cl(mid+3-lo,-3,5)*.6-autoSt.lo)*k;
+  autoSt.hi+=(cl((mid-14)-hi,-5,4)*.5-autoSt.hi)*k;
+  autoApply(false);autoLabel();
+}
+function autoLabel(){
+  const el=$('autost');if(!el)return;
+  if(!autoOn){el.textContent='';return}
+  const f=v=>(v>0?'+':'')+v.toFixed(1).replace('.',',')+' dB';
+  const g=v=>(v>0?'+':'')+v.toFixed(1).replace('.',',');el.textContent=`Auto : volume ${g(autoSt.g)} · basses ${g(autoSt.lo)} · aigus ${g(autoSt.hi)} dB`;
+}
+function setAuto(on){
+  autoOn=on;ST.auto=on;try{localStorage.setItem('pehe_auto',on?'1':'')}catch(e){}
+  $('autobtn').classList.toggle('on',on);initAudio();autoNodes();autoApply(true);autoLabel();
+  clearInterval(autoT);if(on)autoT=setInterval(autoTick,500);
+}
+$('autobtn').onclick=()=>{setAuto(!autoOn);toast(autoOn?'Son auto activé : Pehe ajuste le volume et l\'équilibre du son':'Son auto désactivé')};
+try{autoOn=!!localStorage.getItem('pehe_auto')}catch(e){}
+$('autobtn').classList.toggle('on',autoOn);
+au.addEventListener('play',()=>{if(autoOn&&!autoT){initAudio();autoNodes();autoT=setInterval(autoTick,500)}});
 
 // Démarrage
 applySkin();drawSkins();profDraw();

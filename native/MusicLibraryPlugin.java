@@ -21,6 +21,9 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -37,15 +40,60 @@ import com.getcapacitor.annotation.PermissionCallback;
     name = "MusicLibrary",
     permissions = {
         @Permission(alias = "audio", strings = { Manifest.permission.READ_MEDIA_AUDIO }),
-        @Permission(alias = "storage", strings = { Manifest.permission.READ_EXTERNAL_STORAGE })
+        @Permission(alias = "storage", strings = { Manifest.permission.READ_EXTERNAL_STORAGE }),
+        @Permission(alias = "notif", strings = { "android.permission.POST_NOTIFICATIONS" })
     }
 )
 public class MusicLibraryPlugin extends Plugin {
 
     private boolean firstDevices = true;
 
+    // ---------- Lecture en arrière-plan ----------
+    void mediaAction(String a) {
+        JSObject o = new JSObject();
+        o.put("action", a);
+        notifyListeners("mediaAction", o);
+    }
+
+    @PluginMethod
+    public void bgUpdate(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notif") != PermissionState.GRANTED && !notifAsked) {
+            notifAsked = true;
+            requestPermissionForAlias("notif", call, "notifCallback");
+            return;
+        }
+        startBg(call);
+    }
+
+    private boolean notifAsked = false;
+
+    @PermissionCallback
+    private void notifCallback(PluginCall call) { startBg(call); }
+
+    private void startBg(PluginCall call) {
+        try {
+            Intent i = new Intent(getContext(), PlaybackService.class).setAction(PlaybackService.ACT_UPDATE);
+            i.putExtra("title", call.getString("title", "Pehe"));
+            i.putExtra("artist", call.getString("artist", ""));
+            i.putExtra("playing", call.getBoolean("playing", false));
+            androidx.core.content.ContextCompat.startForegroundService(getContext(), i);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void bgStop(PluginCall call) {
+        try {
+            getContext().startService(new Intent(getContext(), PlaybackService.class).setAction(PlaybackService.ACT_STOP));
+        } catch (Exception ignored) {}
+        call.resolve();
+    }
+
     @Override
     public void load() {
+        PlaybackService.plugin = this;
         AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         am.registerAudioDeviceCallback(new AudioDeviceCallback() {
             @Override
@@ -171,6 +219,107 @@ public class MusicLibraryPlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    // ---------- Mise à jour interne ----------
+    private volatile boolean dlCancel = false;
+    private volatile boolean dlRunning = false;
+
+    private File updateFile() {
+        File dir = new File(getContext().getCacheDir(), "maj");
+        dir.mkdirs();
+        return new File(dir, "Pehe-maj.apk");
+    }
+
+    @PluginMethod
+    public void downloadUpdate(final PluginCall call) {
+        final String url = call.getString("url");
+        final long sizeHint = call.getLong("size", 0L);
+        if (url == null) { call.reject("Adresse manquante"); return; }
+        if (dlRunning) { call.reject("Téléchargement déjà en cours"); return; }
+        dlCancel = false;
+        dlRunning = true;
+        new Thread(() -> {
+            HttpURLConnection con = null;
+            File out = updateFile();
+            try {
+                String u = url;
+                for (int i = 0; i < 6; i++) {
+                    con = (HttpURLConnection) new URL(u).openConnection();
+                    con.setInstanceFollowRedirects(false);
+                    con.setConnectTimeout(20000);
+                    con.setReadTimeout(30000);
+                    con.setRequestProperty("User-Agent", "Pehe");
+                    int code = con.getResponseCode();
+                    if (code >= 300 && code < 400) { u = con.getHeaderField("Location"); con.disconnect(); continue; }
+                    if (code != 200) throw new Exception("Erreur serveur " + code);
+                    break;
+                }
+                long total = con.getContentLength();
+                if (total <= 0) total = sizeHint;
+                long done = 0, lastNotify = 0;
+                byte[] buf = new byte[64 * 1024];
+                try (InputStream in = con.getInputStream(); FileOutputStream fo = new FileOutputStream(out)) {
+                    int n;
+                    while ((n = in.read(buf)) > 0) {
+                        if (dlCancel) throw new Exception("ANNULE");
+                        fo.write(buf, 0, n);
+                        done += n;
+                        long now = System.currentTimeMillis();
+                        if (now - lastNotify > 150) {
+                            lastNotify = now;
+                            JSObject o = new JSObject();
+                            o.put("done", done);
+                            o.put("total", total);
+                            notifyListeners("updateProgress", o);
+                        }
+                    }
+                }
+                JSObject o = new JSObject();
+                o.put("done", done);
+                o.put("total", total > 0 ? total : done);
+                notifyListeners("updateProgress", o);
+                JSObject ret = new JSObject();
+                ret.put("size", done);
+                call.resolve(ret);
+            } catch (Exception e) {
+                out.delete();
+                if ("ANNULE".equals(e.getMessage())) call.reject("Annulé", "CANCELLED");
+                else call.reject("Téléchargement impossible : " + e.getMessage());
+            } finally {
+                if (con != null) con.disconnect();
+                dlRunning = false;
+            }
+        }).start();
+    }
+
+    @PluginMethod
+    public void cancelUpdate(PluginCall call) {
+        dlCancel = true;
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void installUpdate(PluginCall call) {
+        File f = updateFile();
+        if (!f.exists()) { call.reject("Aucune mise à jour téléchargée"); return; }
+        if (Build.VERSION.SDK_INT >= 26 && !getContext().getPackageManager().canRequestPackageInstalls()) {
+            Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName()));
+            s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(s);
+            JSObject ret = new JSObject();
+            ret.put("needPermission", true);
+            call.resolve(ret);
+            return;
+        }
+        Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", f);
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setDataAndType(uri, "application/vnd.android.package-archive");
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(i);
+        JSObject ret = new JSObject();
+        ret.put("needPermission", false);
+        call.resolve(ret);
     }
 
     private String alias() {
