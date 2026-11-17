@@ -72,15 +72,33 @@ public class MusicLibraryPlugin extends Plugin {
 
     private void startBg(PluginCall call) {
         try {
-            Intent i = new Intent(getContext(), PlaybackService.class).setAction(PlaybackService.ACT_UPDATE);
-            i.putExtra("title", call.getString("title", "Pehe"));
-            i.putExtra("artist", call.getString("artist", ""));
-            i.putExtra("playing", call.getBoolean("playing", false));
-            androidx.core.content.ContextCompat.startForegroundService(getContext(), i);
+            String t = call.getString("title", "Pehe"), a = call.getString("artist", "");
+            boolean pl = call.getBoolean("playing", false);
+            long pos = (long) (call.getDouble("position", 0.0) * 1000), dur = (long) (call.getDouble("duration", 0.0) * 1000);
+            float sp = call.getFloat("speed", 1f);
+            if (PlaybackService.instance != null) {
+                PlaybackService.instance.update(t, a, pl, pos, dur, sp);
+            } else {
+                Intent i = new Intent(getContext(), PlaybackService.class).setAction(PlaybackService.ACT_UPDATE);
+                i.putExtra("title", t);
+                i.putExtra("artist", a);
+                i.putExtra("playing", pl);
+                i.putExtra("position", pos);
+                i.putExtra("duration", dur);
+                i.putExtra("speed", sp);
+                androidx.core.content.ContextCompat.startForegroundService(getContext(), i);
+            }
             call.resolve();
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    void mediaSeek(double sec) {
+        JSObject o = new JSObject();
+        o.put("action", "seek");
+        o.put("time", sec);
+        notifyListeners("mediaAction", o);
     }
 
     @PluginMethod
@@ -110,15 +128,28 @@ public class MusicLibraryPlugin extends Plugin {
 
     private void send(AudioDeviceInfo[] list, String what) {
         for (AudioDeviceInfo d : list) {
-            String kind = kind(d.getType());
-            if (kind == null) continue;
+            int t = d.getType();
+            // On ignore le canal « appels » (SCO) qui s'ouvre et se ferme tout seul
+            if (t == 7) continue;
+            String kind = kind(t);
+            if (kind == null || kind.startsWith("Haut-parleur")) continue;
             JSObject o = new JSObject();
             o.put(what, d.getProductName() != null && d.getProductName().length() > 0 ? d.getProductName().toString() : kind);
             o.put("kind", kind);
-            o.put("headset", !kind.startsWith("Haut-parleur"));
+            o.put("headset", true);
+            o.put("stillHeadset", headsetConnected());
             notifyListeners("outputsChanged", o);
             return;
         }
+    }
+
+    private boolean headsetConnected() {
+        AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        for (AudioDeviceInfo d : am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+            int t = d.getType();
+            if (t == 8 || t == 26 || t == 27 || t == 3 || t == 4 || t == 22 || t == 11 || t == 12) return true;
+        }
+        return false;
     }
 
     private static String kind(int t) {

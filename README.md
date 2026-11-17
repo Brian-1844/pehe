@@ -10,7 +10,8 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 - **Partager** une chanson ou un enregistrement (WhatsApp, Messenger, Bluetooth…)
 - **Scratch** : fais tourner le disque au doigt (avant, arrière, arrêt), touche-le pour lecture/pause
 - **Son auto** : volume égalisé et équilibre basses/aigus ajusté en continu
-- **Lecture en arrière-plan** : la musique continue écran éteint ou dans une autre app, avec commandes dans les notifications
+- **Lecture en arrière-plan** : la musique continue écran éteint ou dans une autre app ; commandes dans la notification et sur l'écran verrouillé
+- **Bluetooth** : boutons des casques, enceintes et voitures (lecture, pause, suivant, précédent) ; pause seulement quand le dernier casque se déconnecte
 - Titre, artiste, album et pochette lus dans les tags ID3
 
 ## Son
