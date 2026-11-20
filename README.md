@@ -17,6 +17,7 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 ## Son
 - Remix : vitesse, voix normale ou non, réverbe, écho, basses, son 8D ; préréglages Nightcore, Slowed + réverbe, 8D, Écho…
 - Égaliseur 10 bandes avec préréglages (dont Ukulélé et Doux pour la nuit)
+- **Égaliseur tactile sur le lecteur** : glisse le doigt sur les barres du son pour monter ou baisser une zone, double-touche pour remettre à plat
 - Nuances : coupe-grave, adoucir, présence de la voix, largeur stéréo
 - **Mon profil d'écoute** : 4 questions A/B pour régler le son à ton goût
 - Encoche acouphène (musique encochée de Mamahu) sur toute ta musique

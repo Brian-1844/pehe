@@ -242,6 +242,7 @@ body[data-skin=ville] .petals i,body[data-skin=surf] .petals i{width:8px;height:
 .dots{display:flex;gap:6px}.dots i{width:28px;height:6px;border-radius:3px;background:var(--line)}.dots i.on{background:var(--lag)}
 nav.tabs button{font-size:11px}
 .disc.spin{animation:none}
+canvas#viz{height:96px;touch-action:none;cursor:ns-resize;border-radius:12px;background:#ffffff08}
 .bgimg{display:none;position:absolute;inset:0;background:center/cover no-repeat}
 .bgimg::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,color-mix(in srgb,var(--night) 70%,transparent))}
 body[data-skin=custom] .bgimg{display:block}
@@ -963,7 +964,7 @@ function initAudio(){
   N.split=ctx.createChannelSplitter(2);N.out=ctx.createChannelMerger(2);N.wg=[0,1,2,3].map(()=>ctx.createGain());
   N.mix.connect(N.pan).connect(N.split);
   N.split.connect(N.wg[0],0).connect(N.out,0,0);N.split.connect(N.wg[1],1).connect(N.out,0,0);N.split.connect(N.wg[2],1).connect(N.out,0,1);N.split.connect(N.wg[3],0).connect(N.out,0,1);
-  N.master=ctx.createGain();ctx.onstatechange=()=>{if(ctx.state!=='running'&&!au.paused)setTimeout(()=>ctx.resume().catch(()=>{}),200)};an=ctx.createAnalyser();an.fftSize=128;N.out.connect(N.master).connect(an);an.connect(ctx.destination);applyFx(false);
+  N.master=ctx.createGain();ctx.onstatechange=()=>{if(ctx.state!=='running'&&!au.paused)setTimeout(()=>ctx.resume().catch(()=>{}),200)};an=ctx.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=.75;N.out.connect(N.master).connect(an);an.connect(ctx.destination);applyFx(false);
   }catch(e){ctx=null}
 }
 const lpfHz=()=>fx.lpf<=0?20000:Math.round(20000*Math.pow(3000/20000,fx.lpf/100));
@@ -1093,15 +1094,44 @@ $('pre').onclick=e=>{const b=e.target.closest('button');if(b)setEq(PRE[b.textCon
 
 // Visualiseur
 const cv=$('viz'),g=cv.getContext('2d');
+const BANDN=['Infra-basses','Basses profondes','Basses','Chaleur','Bas-médiums','Médiums','Voix','Présence','Brillance','Air'];
+let vizTouch=null,vizShow=0,lastTap=0,eqSaveT=null;
+function eqSetBand(i,gn){
+  gn=Math.max(-12,Math.min(12,Math.round(gn)));if(eqv[i]===gn)return;eqv[i]=gn;initAudio();
+  if(filters[i])filters[i].gain.setTargetAtTime(gn,ctx.currentTime,.02);
+  const inp=$('eq').querySelector(`[data-b="${i}"]`);if(inp)inp.value=gn;const lb=$('g'+i);if(lb)lb.textContent=(gn>0?'+':'')+gn;
+  [...$('pre').children].forEach(b=>b.classList.remove('on'));clearTimeout(eqSaveT);eqSaveT=setTimeout(save,400);
+}
+function vizAt(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,H=r.height,i=Math.max(0,Math.min(9,Math.floor(x/r.width*10)));return{i,gn:(H/2-y)/(H/2-8)*12}}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(x){}
+  const now=performance.now(),p=vizAt(e);
+  if(now-lastTap<300){setEq(PRE.Plat,'Plat');toast('Égaliseur remis à plat');lastTap=0;return}lastTap=now;
+  vizTouch={i:p.i};eqSetBand(p.i,p.gn);vizShow=performance.now()});
+cv.addEventListener('pointermove',e=>{if(!vizTouch)return;e.preventDefault();const p=vizAt(e);
+  const a=Math.min(vizTouch.i,p.i),b=Math.max(vizTouch.i,p.i);for(let k=a;k<=b;k++)eqSetBand(k,p.gn);vizTouch.i=p.i;vizShow=performance.now()});
+const vizEnd=()=>{if(vizTouch){vizTouch=null;vizShow=performance.now()}};
+cv.addEventListener('pointerup',vizEnd);cv.addEventListener('pointercancel',vizEnd);
 function draw(){
   requestAnimationFrame(draw);if(tab!=='music')return;const W=cv.clientWidth,H=cv.clientHeight,dpr=devicePixelRatio||1;
   if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
-  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);if(!an)return;
-  const d=new Uint8Array(an.frequencyBinCount);an.getByteFrequencyData(d);
-  let lv=0;for(let i=0;i<8;i++)lv+=d[i];$('disc').style.setProperty('--lvl',au.paused?0:(lv/8/255).toFixed(3));
-  const n=48,bw=W/n;
-  for(let i=0;i<n;i++){const v=d[Math.floor(i*d.length/n*0.8)]/255,h=Math.max(2,v*H);
-    g.fillStyle=`rgba(${Math.round(23+232*v)},${Math.round(169+12*v)},${Math.round(166-95*v)},${0.4+v*0.6})`;g.fillRect(i*bw+1,H-h,bw-2,h)}
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  const act=vizTouch||performance.now()-vizShow<1500,mid=H/2,amp=mid-8;
+  // Barres du son
+  if(an){const d=new Uint8Array(an.frequencyBinCount);an.getByteFrequencyData(d);
+    let lv=0;for(let i=0;i<8;i++)lv+=d[i];$('disc').style.setProperty('--lvl',au.paused?0:(lv/8/255).toFixed(3));
+    const n=48,bw=W/n;
+    const ny=ctx.sampleRate/2;for(let i=0;i<n;i++){const f=22*Math.pow(18000/22,(i+.5)/n),v=d[Math.min(d.length-1,Math.floor(f/ny*d.length))]/255,h=Math.max(2,v*H*.9);
+      g.fillStyle=`rgba(${Math.round(23+232*v)},${Math.round(169+12*v)},${Math.round(166-95*v)},${(0.4+v*0.6)*(act?.45:1)})`;g.fillRect(i*bw+1,H-h,bw-2,h)}}
+  // Courbe de l'égaliseur, à toucher
+  const cw=W/10,px=i=>cw*i+cw/2,py=i=>mid-eqv[i]/12*amp;
+  g.strokeStyle=act?'rgba(255,255,255,.25)':'rgba(255,255,255,.1)';g.lineWidth=1;g.setLineDash([3,4]);g.beginPath();g.moveTo(0,mid);g.lineTo(W,mid);g.stroke();g.setLineDash([]);
+  if(act){for(let i=1;i<10;i++){g.fillStyle='rgba(255,255,255,.05)';g.fillRect(cw*i,4,1,H-8)}}
+  g.strokeStyle=act?'#ffb547':'rgba(255,181,71,.55)';g.lineWidth=act?3:2;g.beginPath();
+  for(let i=0;i<10;i++){const x=px(i),y=py(i);if(!i)g.moveTo(0,y);if(i){const xp=px(i-1),yp=py(i-1);g.bezierCurveTo((xp+x)/2,yp,(xp+x)/2,y,x,y)}else g.lineTo(x,y)}g.lineTo(W,py(9));g.stroke();
+  for(let i=0;i<10;i++){const on=vizTouch&&vizTouch.i===i;g.beginPath();g.arc(px(i),py(i),on?8:act?5:3.5,0,7);g.fillStyle=on?'#fff':eqv[i]?'#ffb547':'rgba(255,255,255,.45)';g.fill()}
+  if(act){const i=vizTouch?vizTouch.i:null;g.font='600 12px Inter,sans-serif';g.fillStyle='#fff';g.textBaseline='top';
+    const t=i!==null?`${BANDN[i]} (${LBL[i]} Hz) ${eqv[i]>0?'+':''}${eqv[i]} dB`:'Double-touche pour remettre à plat';g.textAlign='center';g.fillText(t,W/2,i!==null&&eqv[i]>3?H-16:2)}
+  else if(!eqv.some(v=>v)){g.font='500 12px Inter,sans-serif';g.fillStyle='rgba(255,255,255,.4)';g.textAlign='center';g.textBaseline='top';g.fillText('Glisse sur les barres pour régler le son',W/2,2)}
 }
 
 // Onglets
