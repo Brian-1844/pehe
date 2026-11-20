@@ -166,9 +166,16 @@ nav.tabs button.on{color:var(--acc)}
 .notchst{font-size:13px;color:var(--mute);margin:-4px 0 0}
 /* Mamahu (onglet) */
 #mh{max-width:760px;margin:0 auto;padding:0 max(4vw,14px)}
-.mhhead{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.mhhead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 16px;align-items:end;margin-bottom:10px}
+@media(max-width:520px){.mhhead{grid-template-columns:minmax(0,1fr)}}
+.mhhead .note{margin:0}
+#mh-mhnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;overflow:visible;padding-bottom:12px}
+@media(max-width:520px){#mh-mhnav{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#mh-mhnav .chip{justify-content:center}
+body[data-tab]:not([data-tab=music]) .hdr>div:last-child{display:none!important}
+body[data-tab]:not([data-tab=music]) .hdr{padding-bottom:8px}
 .mhhead h2{font-size:clamp(30px,5vw,40px);color:var(--lag)}
-.mhvol{flex:1 1 200px;max-width:280px}
+.mhvol{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px 14px}
 #mh .card{padding:16px;margin-bottom:14px;overflow:visible}
 #mh h2{margin:0 0 6px}
 #mh .card h2{font-size:22px}
@@ -1136,7 +1143,7 @@ function draw(){
 
 // Onglets
 function showTab(t){
-  tab=t;['music','fx','rec','mh','set'].forEach(x=>$('tab-'+x).hidden=x!==t);
+  tab=t;document.body.dataset.tab=t;['music','fx','rec','mh','set'].forEach(x=>$('tab-'+x).hidden=x!==t);
   [...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   if(t==='fx')applyFx(false);
   if(t==='mh'&&window.mhSafety)window.mhSafety();
@@ -1833,7 +1840,7 @@ const sq = v => (v/100)*(v/100);
 /* ---------- Navigation ---------- */
 document.querySelectorAll('#mh-mhnav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#mh-mhnav button').forEach(x => x.classList.toggle('on', x === b));
-  document.querySelectorAll('#mh-mh section.mhtab').forEach(s => s.hidden = s.id !== b.dataset.tab);
+  document.querySelectorAll('#mh section.mhtab').forEach(s => s.hidden = s.id !== b.dataset.tab);
   window.scrollTo(0, 0);
 });
 
