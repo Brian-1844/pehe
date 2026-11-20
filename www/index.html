@@ -251,6 +251,15 @@ body[data-skin=custom] .bgimg{display:block}
 .skin.addsk i{display:grid;place-items:center;background:var(--panel);font-style:normal;font-size:28px}
 .upbar{height:14px;border-radius:7px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
 .upbar div{height:100%;width:0;background:linear-gradient(90deg,var(--lag),var(--acc));transition:width .2s}
+.mset{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px}
+@media(max-width:520px){.mset{grid-template-columns:minmax(0,1fr)}}
+.mset label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.mset select{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 10px;font-size:15px}
+.recb.blue{background:var(--lag);box-shadow:0 0 0 8px color-mix(in srgb,var(--lag) 18%,transparent)}
+.tsegs{max-height:48vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--bg)}
+.tseg{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;margin:8px 0;font-size:15px;line-height:1.45}
+.tts{min-width:0;min-height:26px;padding:0 6px;border-radius:6px;font-size:12px;font-weight:700;color:var(--lag);background:color-mix(in srgb,var(--lag) 12%,transparent);font-variant-numeric:tabular-nums}
+.tseg [contenteditable]{outline:none;border-bottom:1px dashed transparent}.tseg [contenteditable]:focus{border-bottom-color:var(--lag)}
 .pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .pad{position:relative;min-height:68px;border-radius:16px;color:#fff;font-weight:700;font-size:13px;line-height:1.2;padding:8px 4px;background:var(--pc,var(--lag));box-shadow:inset 0 -4px 0 #0003;transition:transform .06s,filter .06s;text-align:center;overflow-wrap:normal;hyphens:auto}
 .pad:active,.pad.hit{transform:scale(.94);filter:brightness(1.25)}
@@ -467,6 +476,27 @@ body[data-skin=custom] .bgimg{display:block}
 <!-- ===== Onglet Micro ===== -->
 <section class="tab" id="tab-rec" hidden>
  <div class="col">
+  <div class="card"><div class="tapa"></div><div class="in">
+    <h3>Réunion, cours, conversation</h3>
+    <p class="cnote" style="margin:0">Enregistre longtemps, même écran éteint. Pehe écrit ensuite tout ce qui a été dit, en texte et en fichier Word.</p>
+    <div class="recbox">
+      <button class="recb blue" id="mrecb" aria-label="Enregistrer une réunion"><svg><use id="mrecico" href="#mic"/></svg></button>
+      <div class="rtime" id="mtime">0:00</div>
+      <div class="rmeter"><div id="mlvl"></div></div>
+    </div>
+    <div class="mset">
+      <label>Type<select id="mkind"><option>Réunion</option><option>Cours</option><option>Conversation</option><option>Conférence</option><option>Entretien</option><option>Culte</option></select></label>
+      <label>Langue parlée<select id="mlang"></select></label>
+      <label>Qualité du texte<select id="mq"></select></label>
+    </div>
+    <form class="rkeep" id="mkeep" hidden onsubmit="return false" style="margin-top:12px"><input id="mname" maxlength="80" aria-label="Nom de l'enregistrement"><div class="brow" style="margin:0"><button type="button" class="mb pri" id="mtx" style="min-height:44px">Transcrire en texte</button><button type="button" class="mb" id="mno" style="min-height:44px">Garder sans texte</button><button type="button" class="mb" id="mdel" style="min-height:44px">Supprimer</button></div></form>
+    <div class="brow"><button class="mb" id="mfbtn" style="min-height:44px">Transcrire un fichier audio</button><input type="file" id="mfile" accept="audio/*,video/*" hidden></div>
+    <p class="notchst" style="margin-top:10px">La première fois, Pehe télécharge le moteur de reconnaissance vocale (une seule fois, Wi-Fi conseillé). Ensuite la transcription se fait sur ton téléphone : tes enregistrements ne sont envoyés nulle part. « Précis » écrit mieux mais met plus de temps.</p>
+  </div></div>
+  <div class="card"><div class="tapa"></div><div class="in">
+    <h3>Mes transcriptions</h3>
+    <ol class="pl" id="tlist"></ol>
+  </div></div>
   <div class="card"><div class="tapa"></div><div class="in">
     <h3>Enregistrer un son</h3>
     <div class="chips" id="rsrc"><button class="chip on" data-r="voice">Voix (micro)</button><button class="chip" data-r="raw">Son extérieur (micro brut)</button><button class="chip" data-r="mix">Ma musique remixée</button></div>
@@ -870,6 +900,7 @@ function trackSheet(t){
   sheet(`<h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p>
   <button class="opt${fav.has(t.key)?' on':''}" data-s="fav" style="${fav.has(t.key)?'color:var(--acc)':''}"><svg><use href="#heart"/></svg>${fav.has(t.key)?'Retirer des favoris':'Ajouter aux favoris'}</button>
   <button class="opt" data-s="share"><svg style="fill:currentColor"><use href="#share"/></svg>Partager</button>
+  ${t.rec?'<button class="opt" data-s="trx"><svg style="fill:currentColor"><use href="#list"/></svg>Transcrire en texte (Word)</button>':''}
   ${t.rec?'<button class="opt" data-s="rname"><svg style="fill:currentColor"><use href="#mic"/></svg>Renommer l\'enregistrement</button>':''}
   <div class="sep">Ajouter à une playlist</div>
   ${pls.map(x=>`<button class="opt" data-s="add" data-id="${x.id}"><svg style="fill:currentColor"><use href="#list"/></svg>${esc(x.name)}${x.keys.includes(t.key)?'<span class="chk">✓ déjà dedans</span>':''}</button>`).join('')}
@@ -897,11 +928,12 @@ $('si').addEventListener('click',e=>{
   else if(s==='mvup'||s==='mvdn'){const i=p.keys.indexOf(t.key),j=i+(s==='mvup'?-1:1);if(j>=0&&j<p.keys.length){[p.keys[i],p.keys[j]]=[p.keys[j],p.keys[i]];save();if(qview===view)refreshQueue();render()}closeSheet()}
   else if(s==='hide'){closeSheet();if(t.rec)confirmSheet('Supprimer « '+t.title+' » ?','L\'enregistrement sera effacé définitivement.','Supprimer',()=>removeTrack(t));else removeTrack(t)}
   else if(s==='share'){closeSheet();shareTrack(t)}
+  else if(s==='trx'){closeSheet();transcribeTrack(t)}
   else if(s==='rname'){closeSheet();nameSheet('Renommer',t.title,v=>{t.title=v;idb.get(t.id).then(r=>{if(r){r.name=v;idb.put(r)}});updateNow();render()})}
 });
 function removeTrack(t){
   if(t.lib){hidden.add(t.key)}
-  if(t.rec){idb.del(t.id).catch(()=>{});URL.revokeObjectURL(t.url)}
+  if(t.rec){idb.get(t.id).then(r=>{for(let i=0;i<((r&&r.pcm)||0);i++)idb.del(t.id+':'+i,'pcm').catch(()=>{})}).catch(()=>{}).finally(()=>idb.del(t.id).catch(()=>{}));URL.revokeObjectURL(t.url)}
   list=list.filter(x=>x!==t);byKey.delete(t.key);
   if(t===cur){au.pause();cur=null;refreshQueue();if(list.length)load(queue[0]||list[0],false);else resetNow()}else refreshQueue();
   save();render();toast(t.rec?'Enregistrement supprimé':'Retirée de la bibliothèque');
@@ -1191,9 +1223,9 @@ async function shareTrack(t){
 }
 
 // --- Enregistrements (gardés dans le téléphone) ---
-const idb=(()=>{let p=null;const open=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('pehe',3);r.onupgradeneeded=()=>{const db=r.result;['recs','pads','imgs'].forEach(n=>{if(!db.objectStoreNames.contains(n))db.createObjectStore(n,{keyPath:'id'})})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+const idb=(()=>{let p=null;const open=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('pehe',4);r.onupgradeneeded=()=>{const db=r.result;['recs','pads','imgs','pcm','trans'].forEach(n=>{if(!db.objectStoreNames.contains(n))db.createObjectStore(n,{keyPath:'id'})})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
   const tx=(m,f,st='recs')=>open().then(db=>new Promise((res,rej)=>{const t=db.transaction(st,m),q=f(t.objectStore(st));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
-  return{all:(st)=>tx('readonly',s=>s.getAll(),st),get:id=>tx('readonly',s=>s.get(id)),put:(v,st)=>tx('readwrite',s=>s.put(v),st),del:(id,st)=>tx('readwrite',s=>s.delete(id),st)}})();
+  return{all:(st)=>tx('readonly',s=>s.getAll(),st),get:(id,st)=>tx('readonly',s=>s.get(id),st),put:(v,st)=>tx('readwrite',s=>s.put(v),st),del:(id,st)=>tx('readwrite',s=>s.delete(id),st)}})();
 const dstr=ts=>new Date(ts).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
 function recTrack(r){return{key:'r:'+r.id,rec:true,id:r.id,blob:r.blob,url:URL.createObjectURL(r.blob),title:r.name,artist:'Mon enregistrement',album:dstr(r.date),cover:'',dur:r.dur}}
 function renderRecs(){
@@ -1524,6 +1556,228 @@ $('autobtn').onclick=()=>{setAuto(!autoOn);toast(autoOn?'Son auto activé : Pehe
 try{autoOn=!!localStorage.getItem('pehe_auto')}catch(e){}
 $('autobtn').classList.toggle('on',autoOn);
 au.addEventListener('play',()=>{if(autoOn&&!autoT){initAudio();autoNodes();autoT=setInterval(autoTick,500)}});
+
+// --- Réunions, cours, conversations : enregistrement long + transcription + Word ---
+const ASR_LIB=ML?new URL('vendor/transformers.min.js',location.href).href:'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js';
+const MODELS={rapide:['onnx-community/whisper-base','Rapide','≈ 80 Mo'],precis:['onnx-community/whisper-small','Précis','≈ 250 Mo']};
+const LANGS={french:'Français',english:'English',auto:'Détection auto'};
+let asrSet={lang:'french',q:'rapide'};try{Object.assign(asrSet,JSON.parse(localStorage.getItem('pehe_asr')||'{}'))}catch(e){}
+const saveAsr=()=>{try{localStorage.setItem('pehe_asr',JSON.stringify(asrSet))}catch(e){}};
+const hms=t=>{t=Math.max(0,Math.floor(t||0));const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0')};
+let transList=[];
+
+// Moteur de transcription (dans un fil séparé pour ne pas bloquer l'app)
+const WSRC=`let asr=null,cur='';
+self.onmessage=async e=>{const m=e.data;try{
+ if(m.type==='load'){
+  if(asr&&cur===m.model){postMessage({type:'loaded'});return}
+  const T=await import(m.lib);T.env.allowLocalModels=false;
+  const mk=(device,dtype)=>T.pipeline('automatic-speech-recognition',m.model,{device,dtype,progress_callback:p=>{if(p.status==='progress'&&p.total)postMessage({type:'dl',file:p.file,loaded:p.loaded,total:p.total})}});
+  let gpu=false;try{gpu=!!(self.navigator.gpu&&await self.navigator.gpu.requestAdapter())}catch(x){}
+  try{asr=gpu?await mk('webgpu',{encoder_model:'fp32',decoder_model_merged:'q4'}):await mk('wasm','q8')}catch(x){if(!gpu)throw x;asr=await mk('wasm','q8')}
+  cur=m.model;postMessage({type:'loaded',gpu});
+ }else if(m.type==='chunk'){
+  const o={task:'transcribe',return_timestamps:true};if(m.lang)o.language=m.lang;
+  const r=await asr(m.audio,o),len=m.audio.length/16000;
+  const cs=(r.chunks&&r.chunks.length)?r.chunks:[{timestamp:[0,len],text:r.text}];
+  postMessage({type:'part',segs:cs.map(c=>({t:m.offset+((c.timestamp&&c.timestamp[0])||0),text:String(c.text||'').trim()})).filter(s=>s.text)});
+ }}catch(err){postMessage({type:'error',msg:String((err&&err.message)||err)})}};`;
+let asrW=null,asrCb=null,dlFiles={};
+function asrWorker(){
+  if(!asrW){asrW=new Worker(URL.createObjectURL(new Blob([WSRC],{type:'text/javascript'})),{type:'module'});
+    asrW.onmessage=e=>{const d=e.data;if(d.type==='dl'){dlFiles[d.file]=[d.loaded,d.total];onDl();return}if(asrCb)asrCb(d)};
+    asrW.onerror=e=>{if(asrCb)asrCb({type:'error',msg:e.message||'Le moteur de transcription ne démarre pas'})}}
+  return asrW;
+}
+const asrCall=(msg,tr)=>new Promise((res,rej)=>{asrCb=d=>{asrCb=null;d.type==='error'?rej(new Error(d.msg)):res(d)};asrWorker().postMessage(msg,tr||[])});
+let curJob=null;
+function onDl(){if(!curJob)return;let l=0,t=0;for(const[a,b]of Object.values(dlFiles)){l+=a;t+=b}curJob.status=`Téléchargement du modèle (une seule fois) : ${t?Math.round(l/t*100):0} % · ${mb(l)} sur ${mb(t)}`;renderTrans()}
+
+// Sources audio découpées en morceaux de 30 s, coupés dans les silences
+function rmsOf(a,s=0,e=a.length){let x=0;for(let i=s;i<e;i++)x+=a[i]*a[i];return Math.sqrt(x/Math.max(1,e-s))}
+function cutPoint(buf){const F=1600,from=24*16000,to=Math.min(buf.length,30*16000);let best=to,bv=1e9;for(let i=from;i+F<=to;i+=F){const v=rmsOf(buf,i,i+F);if(v<bv){bv=v;best=i+F/2|0}}return best}
+async function* pcmBlocks(recId,n){for(let i=0;i<n;i++){const b=await idb.get(recId+':'+i,'pcm');if(b&&b.data){const a=new Float32Array(b.data.length);for(let k=0;k<a.length;k++)a[k]=b.data[k]/32768;yield a}}}
+async function* blobBlocks(blob){
+  const ab=await blob.arrayBuffer(),dc=new (window.AudioContext||window.webkitAudioContext)();let buf;try{buf=await dc.decodeAudioData(ab)}finally{dc.close&&dc.close()}
+  const step=600;for(let s=0;s<buf.duration;s+=step){const d=Math.min(step,buf.duration-s),oc=new OfflineAudioContext(1,Math.ceil(d*16000),16000),bs=oc.createBufferSource();bs.buffer=buf;bs.connect(oc.destination);bs.start(0,s,d);yield (await oc.startRendering()).getChannelData(0)}
+}
+async function* windows(src){
+  let buf=new Float32Array(0),off=0;const gen=src.kind==='pcm'?pcmBlocks(src.recId,src.blocks):blobBlocks(src.blob);
+  const cat=(a,b)=>{const c=new Float32Array(a.length+b.length);c.set(a);c.set(b,a.length);return c};
+  for await(const blk of gen){buf=cat(buf,blk);while(buf.length>=30*16000){const c=cutPoint(buf);yield{audio:buf.slice(0,c),offset:off};off+=c/16000;buf=buf.slice(c)}}
+  if(buf.length>8000)yield{audio:buf,offset:off};
+}
+const HALLU=/sous-titr|amara\.org|merci d'avoir regardé|thanks for watching|abonnez-vous|subscribe to|^\W*(musique|music)\W*$/i;
+
+// File d'attente des transcriptions
+const jobs=[];let jobBusy=false,wakeL=null;
+async function runJobs(){
+  if(jobBusy)return;jobBusy=true;
+  while(jobs.length){const j=jobs[0];curJob=j.tr;
+    try{await runJob(j)}catch(e){j.tr.status='Erreur : '+(ML?e.message:'la transcription marche dans l\'app Android (l\'aperçu bloque le téléchargement du modèle)');j.tr.state='err';await idb.put(stripTr(j.tr),'trans').catch(()=>{});renderTrans();toast('Transcription interrompue')}
+    jobs.shift()}
+  curJob=null;jobBusy=false;try{wakeL&&wakeL.release()}catch(e){}wakeL=null;if(ML&&ML.bgUpdate&&au.paused&&!meet)ML.bgStop().catch(()=>{});
+}
+const stripTr=tr=>({id:tr.id,recId:tr.recId,title:tr.title,date:tr.date,dur:tr.dur,lang:tr.lang,q:tr.q,segs:tr.segs,state:tr.state,status:tr.status,prog:tr.prog});
+async function runJob(j){
+  const tr=j.tr;tr.state='run';tr.segs=[];tr.prog=0;dlFiles={};
+  try{wakeL=await navigator.wakeLock.request('screen')}catch(e){}
+  tr.status='Préparation du moteur…';renderTrans();
+  await asrCall({type:'load',model:MODELS[tr.q][0],lib:ASR_LIB});
+  const t0=Date.now();let last='';
+  for await(const w of windows(j.src)){
+    const len=w.audio.length/16000;tr.prog=Math.min(.999,(w.offset+len)/Math.max(1,tr.dur));
+    if(rmsOf(w.audio)>.003){
+      const r=await asrCall({type:'chunk',audio:w.audio,offset:w.offset,lang:tr.lang==='auto'?null:tr.lang},[w.audio.buffer]);
+      for(const s of r.segs){if(HALLU.test(s.text)||s.text===last)continue;last=s.text;tr.segs.push(s)}
+    }
+    const el=(Date.now()-t0)/1000,rest=tr.prog>0.02?el/tr.prog*(1-tr.prog):0;
+    tr.status=`Transcription : ${Math.round(tr.prog*100)} %${rest?' · encore ≈ '+hms(rest):''}`;
+    if(ML&&ML.bgUpdate)ML.bgUpdate({title:'Pehe · transcription',artist:tr.status,playing:!au.paused,busy:true}).catch(()=>{});
+    await idb.put(stripTr(tr),'trans').catch(()=>{});renderTrans();
+  }
+  tr.state='done';tr.prog=1;tr.status=tr.segs.length?'Terminé':'Terminé : aucune parole détectée';
+  await idb.put(stripTr(tr),'trans').catch(()=>{});
+  if(j.src.kind==='pcm')for(let i=0;i<j.src.blocks;i++)idb.del(j.src.recId+':'+i,'pcm').catch(()=>{});
+  renderTrans();toast('Transcription prête : '+tr.title);
+}
+function queueTr(title,recId,dur,src){
+  const tr={id:'t'+Date.now().toString(36),recId,title,date:Date.now(),dur,lang:asrSet.lang,q:asrSet.q,segs:[],state:'wait',status:'En attente',prog:0};
+  transList.unshift(tr);idb.put(stripTr(tr),'trans').catch(()=>{});jobs.push({tr,src});renderTrans();runJobs();showTab('rec');
+}
+function transcribeTrack(t){
+  if(!t.rec||!t.blob){toast('Seuls tes enregistrements peuvent être transcrits ici');return}
+  idb.get(t.id).then(r=>{const n=r&&r.pcm||0;queueTr(t.title,t.id,t.dur,n?{kind:'pcm',recId:t.id,blocks:n}:{kind:'blob',blob:t.blob})});
+}
+
+// Liste des transcriptions
+function renderTrans(){
+  const el=$('tlist');if(!el)return;
+  el.innerHTML=transList.map(tr=>`<li data-tr="${esc(tr.id)}"><span class="th" style="background:var(--lag);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px">${tr.state==='done'?'Aa':Math.round((tr.prog||0)*100)+'%'}</span>
+   <span><div class="t">${esc(tr.title)}</div><div class="a">${esc(tr.state==='done'?dstr(tr.date)+' · '+hms(tr.dur)+' · '+(tr.segs||[]).length+' passages':tr.status)}</div>${tr.state==='run'?`<div class="upbar" style="height:8px;margin-top:4px"><div style="width:${Math.round((tr.prog||0)*100)}%"></div></div>`:''}</span>
+   <span class="d"></span><span></span><button class="mo" data-to="1" aria-label="Ouvrir"><svg style="fill:currentColor"><use href="#more"/></svg></button></li>`).join('')||'<li class="empty" style="display:block">Pas encore de transcription.</li>';
+}
+$('tlist').onclick=e=>{const li=e.target.closest('li[data-tr]');if(!li)return;const tr=transList.find(x=>x.id===li.dataset.tr);if(tr)openTrans(tr)};
+let openTr=null;
+function openTrans(tr){
+  openTr=tr;const segs=tr.segs||[],canPlay=byKey.has('r:'+tr.recId);
+  sheet(`<h4>Transcription</h4>
+  <form class="nf" data-s="trname" style="margin:4px 0 2px"><input id="trtitle" value="${esc(tr.title)}" maxlength="80" aria-label="Titre"></form>
+  <p>${dstr(tr.date)} · ${hms(tr.dur)} · ${esc(LANGS[tr.lang]||'')} · ${tr.state==='done'?segs.length+' passages':esc(tr.status)}</p>
+  ${tr.state==='done'&&segs.length?`<div class="brow" style="margin:0 0 10px"><button class="mb pri" data-tx="docx-save" style="min-height:44px">Enregistrer en Word</button><button class="mb" data-tx="docx-share" style="min-height:44px">Partager le Word</button><button class="mb" data-tx="txt" style="min-height:44px">Texte (.txt)</button><button class="mb" data-tx="copy" style="min-height:44px">Copier</button></div>`:''}
+  ${tr.state==='err'?`<div class="brow" style="margin:0 0 10px"><button class="mb pri" data-tx="retry" style="min-height:44px">Relancer la transcription</button></div>`:''}
+  <p style="font-size:13px;margin:0 0 6px">${canPlay?'Touche une heure pour réécouter ce passage. ':''}Touche un texte pour le corriger.</p>
+  <div class="tsegs">${segs.map((s,i)=>`<p class="tseg"><button class="tts" data-tt="${s.t}"${canPlay?'':' disabled'}>${hms(s.t)}</button><span contenteditable="true" data-ti="${i}">${esc(s.text)}</span></p>`).join('')||'<p class="cnote">Le texte apparaîtra ici.</p>'}</div>
+  <div class="brow"><button class="mb" data-tx="del" style="min-height:44px;color:var(--acc)">Supprimer</button><button class="mb" data-s="close" style="min-height:44px">Fermer</button></div>`);
+}
+$('si').addEventListener('focusout',e=>{const sp=e.target.closest('[data-ti]');if(sp&&openTr){openTr.segs[+sp.dataset.ti].text=sp.textContent.trim();idb.put(stripTr(openTr),'trans').catch(()=>{})}
+  if(e.target.id==='trtitle'&&openTr){openTr.title=e.target.value.trim()||openTr.title;idb.put(stripTr(openTr),'trans').catch(()=>{});renderTrans()}});
+$('si').addEventListener('click',async e=>{
+  const tt=e.target.closest('[data-tt]');if(tt&&openTr){const t=byKey.get('r:'+openTr.recId);if(t){qview='rec';queue=viewTracks('rec');makeOrder();load(t,true,+tt.dataset.tt);toast('Lecture à '+hms(+tt.dataset.tt))}return}
+  const b=e.target.closest('[data-tx]');if(!b||!openTr)return;const tr=openTr,a=b.dataset.tx,fn=(tr.title.replace(/[^\wÀ-ÿ\- ]+/g,'').trim()||'transcription').slice(0,60);
+  if(a==='docx-save')exportFile(docxBlob(tr),fn+'.docx','save');
+  else if(a==='docx-share')exportFile(docxBlob(tr),fn+'.docx','share');
+  else if(a==='txt')exportFile(new Blob([txtOf(tr)],{type:'text/plain'}),fn+'.txt','save');
+  else if(a==='copy'){try{await navigator.clipboard.writeText(txtOf(tr));toast('Texte copié')}catch(x){toast('Copie impossible ici')}}
+  else if(a==='retry'){const t=byKey.get('r:'+tr.recId);closeSheet();transList=transList.filter(x=>x!==tr);idb.del(tr.id,'trans').catch(()=>{});if(t)transcribeTrack(t);else toast('L\'enregistrement d\'origine n\'existe plus')}
+  else if(a==='del'){closeSheet();confirmSheet('Supprimer cette transcription ?','Le texte sera effacé. L\'enregistrement audio reste dans ta bibliothèque.','Supprimer',()=>{transList=transList.filter(x=>x!==tr);idb.del(tr.id,'trans').catch(()=>{});renderTrans()})}
+});
+$('si').addEventListener('submit',e=>{if(e.target.dataset.s==='trname'){e.preventDefault();e.target.querySelector('input').blur()}});
+const txtOf=tr=>tr.title+'\n'+dstr(tr.date)+' · durée '+hms(tr.dur)+'\n\n'+(tr.segs||[]).map(s=>'['+hms(s.t)+'] '+s.text).join('\n')+'\n';
+
+// Fichier Word (.docx) fait dans l'app
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function zipBlob(files,type){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0,cds=0;const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+  for(const[name,str]of files){const nm=enc.encode(name),data=enc.encode(str),c=crc32(data);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,tm,true);h.setUint16(12,dt,true);h.setUint32(14,c,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,nm.length,true);
+    parts.push(h.buffer,nm,data);
+    const e=new DataView(new ArrayBuffer(46));e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(12,tm,true);e.setUint16(14,dt,true);e.setUint32(16,c,true);e.setUint32(20,data.length,true);e.setUint32(24,data.length,true);e.setUint16(28,nm.length,true);e.setUint32(42,off,true);
+    cd.push(e.buffer,nm);cds+=46+nm.length;off+=30+nm.length+data.length}
+  const end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cds,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cd,end.buffer],{type});
+}
+function docxBlob(tr){
+  const x=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+  const R=(t,p='')=>`<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>${p}</w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r>`;
+  const P=(runs,sp=120)=>`<w:p><w:pPr><w:spacing w:after="${sp}"/></w:pPr>${runs}</w:p>`;
+  const body=P(R(tr.title,'<w:b/><w:color w:val="0F5F6E"/><w:sz w:val="36"/>'),80)
+   +P(R(`${dstr(tr.date)} · durée ${hms(tr.dur)} · ${LANGS[tr.lang]||''} · transcrit par Pehe`,'<w:color w:val="6B6356"/><w:sz w:val="20"/>'),300)
+   +(tr.segs||[]).map(s=>P(R('['+hms(s.t)+']  ','<w:b/><w:color w:val="17A9A6"/><w:sz w:val="20"/>')+R(s.text,'<w:sz w:val="23"/>'))).join('');
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  return zipBlob([
+   ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+   ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+   ['word/document.xml',doc]],'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+}
+window.__docx=docxBlob;
+async function exportFile(blob,name,mode){
+  try{
+    if(ML){const data=await b64(blob);if(mode==='save'&&ML.saveDownload){try{await ML.saveDownload({data,name,mime:blob.type});toast('Enregistré dans Téléchargements › Pehe : '+name);return}catch(e){}}
+      await ML.shareFile({data,name,mime:blob.type,text:name});return}
+    const f=new File([blob],name,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}
+    toast('Le fichier se crée dans l\'app Android (l\'aperçu bloque les téléchargements)');
+  }catch(e){if(e&&e.name!=='AbortError')toast('Export impossible : '+(e.message||e))}
+}
+
+// Enregistreur de réunion (écran éteint possible)
+let meet=null;
+// Capture du son à 16 kHz (format du moteur de transcription), avec filtre anti-repliement
+const WK=`class C extends AudioWorkletProcessor{constructor(){super();this.r=sampleRate/16000;this.p=0;this.a=0;this.c=0;this.b=new Float32Array(16000);this.n=0;this.port.onmessage=()=>{this.port.postMessage(this.b.slice(0,this.n));this.n=0}}
+process(i){const x=i[0]&&i[0][0];if(x){for(let k=0;k<x.length;k++){this.a+=x[k];this.c++;if(++this.p>=this.r){this.p-=this.r;this.b[this.n++]=this.a/this.c;this.a=0;this.c=0;if(this.n===16000){this.port.postMessage(this.b);this.b=new Float32Array(16000);this.n=0}}}}return true}}registerProcessor('pcm-cap',C);`;
+async function meetStart(){
+  if(meet)return;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
+    const rc=new (window.AudioContext||window.webkitAudioContext)();
+    await rc.resume();await rc.audioWorklet.addModule(URL.createObjectURL(new Blob([WK],{type:'text/javascript'})));
+    const id=Date.now().toString(36),src2=rc.createMediaStreamSource(stream),node=new AudioWorkletNode(rc,'pcm-cap'),mute=rc.createGain(),lvl=rc.createAnalyser();
+    mute.gain.value=0;src2.connect(node).connect(mute).connect(rc.destination);lvl.fftSize=1024;src2.connect(lvl);
+    const m={id,stream,rc,node,lvl,pend:[],pendLen:0,blocks:0,t0:Date.now(),saving:Promise.resolve()};
+    const flush=()=>{if(!m.pendLen)return;const a=new Int16Array(m.pendLen);let o=0;for(const p of m.pend){for(let k=0;k<p.length;k++)a[o++]=Math.max(-32768,Math.min(32767,p[k]*32768))}m.pend=[];m.pendLen=0;const n=m.blocks++;m.saving=m.saving.then(()=>idb.put({id:id+':'+n,data:a},'pcm')).catch(()=>{})};
+    m.flush=flush;
+    node.port.onmessage=e=>{m.pend.push(e.data);m.pendLen+=e.data.length;if(m.pendLen>=60*16000)flush()};
+    const mime=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus','audio/webm'].find(x=>window.MediaRecorder&&MediaRecorder.isTypeSupported(x))||'';
+    m.mr=new MediaRecorder(stream,Object.assign(mime?{mimeType:mime}:{},{audioBitsPerSecond:32000}));m.chunks=[];m.mr.ondataavailable=e=>{if(e.data.size)m.chunks.push(e.data)};m.mr.start(1000);
+    meet=m;$('mrecb').classList.add('on');$('mrecico').setAttribute('href','#pause');$('mkeep').hidden=true;
+    const buf=new Uint8Array(1024);
+    m.tick=setInterval(()=>{$('mtime').textContent=hms((Date.now()-m.t0)/1000);lvl.getByteTimeDomainData(buf);let mx=0;for(const v of buf)mx=Math.max(mx,Math.abs(v-128));$('mlvl').style.width=Math.min(100,mx/128*160)+'%'},250);
+    if(ML&&ML.bgUpdate)ML.bgUpdate({title:'Pehe · enregistrement en cours',artist:'Réunion, cours ou conversation',playing:!au.paused,recording:true}).catch(()=>{});
+    toast('Enregistrement lancé : tu peux éteindre l\'écran');
+  }catch(e){meet=null;toast('Micro indisponible : autorise le micro'+(ML?'':' (bloqué dans l\'aperçu, utilise l\'app Android)'))}
+}
+async function meetStop(){
+  const m=meet;if(!m)return;clearInterval(m.tick);
+  m.node.port.postMessage('flush');await new Promise(r=>setTimeout(r,300));m.flush();
+  await new Promise(r=>{m.mr.onstop=r;m.mr.stop()});m.stream.getTracks().forEach(t=>t.stop());m.rc.close().catch(()=>{});await m.saving;
+  meet=null;$('mrecb').classList.remove('on');$('mrecico').setAttribute('href','#mic');$('mlvl').style.width='0';
+  if(ML&&ML.bgUpdate){if(au.paused&&!jobBusy)ML.bgStop().catch(()=>{});else ML.bgUpdate({title:cur?cur.title:'Pehe',artist:cur?cur.artist:'',playing:!au.paused,recording:false}).catch(()=>{})}
+  const dur=(Date.now()-m.t0)/1000;
+  if(dur<2){toast('Enregistrement trop court');for(let i=0;i<m.blocks;i++)idb.del(m.id+':'+i,'pcm').catch(()=>{});return}
+  m.blob=new Blob(m.chunks,{type:m.mr.mimeType||'audio/webm'});m.dur=dur;meetPend=m;
+  $('mname').value=($('mkind').value||'Réunion')+' du '+dstr(Date.now());$('mkeep').hidden=false;$('mtime').textContent=hms(dur);
+}
+let meetPend=null;
+async function meetKeep(tx){
+  const m=meetPend;if(!m)return;meetPend=null;$('mkeep').hidden=true;$('mtime').textContent='0:00';
+  const r={id:m.id,name:$('mname').value.trim()||'Mon enregistrement',blob:m.blob,date:Date.now(),dur:m.dur,pcm:tx?m.blocks:0,meeting:true};
+  try{await idb.put(r)}catch(e){toast('Gardé seulement pour cette séance')}
+  const t=recTrack(r);t.artist=$('mkind').value||'Réunion';list.unshift(t);byKey.set(t.key,t);refreshQueue();render();
+  if(tx)queueTr(r.name,r.id,r.dur,{kind:'pcm',recId:r.id,blocks:m.blocks});
+  else{for(let i=0;i<m.blocks;i++)idb.del(m.id+':'+i,'pcm').catch(()=>{});toast('Enregistrement gardé dans ta bibliothèque')}
+}
+$('mrecb').onclick=()=>meet?meetStop():meetStart();
+$('mtx').onclick=()=>meetKeep(true);$('mno').onclick=()=>meetKeep(false);
+$('mdel').onclick=()=>{const m=meetPend;meetPend=null;$('mkeep').hidden=true;$('mtime').textContent='0:00';if(m)for(let i=0;i<m.blocks;i++)idb.del(m.id+':'+i,'pcm').catch(()=>{});toast('Enregistrement supprimé')};
+$('mlang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===asrSet.lang?' selected':''}>${v}</option>`).join('');
+$('mq').innerHTML=Object.entries(MODELS).map(([k,v])=>`<option value="${k}"${k===asrSet.q?' selected':''}>${v[1]} (${v[2]}, téléchargé une fois)</option>`).join('');
+$('mlang').onchange=e=>{asrSet.lang=e.target.value;saveAsr()};$('mq').onchange=e=>{asrSet.q=e.target.value;saveAsr()};
+$('mfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const a=new Audio();a.preload='metadata';a.src=URL.createObjectURL(f);
+  a.onloadedmetadata=()=>{queueTr(f.name.replace(/\.[^.]+$/,''),null,isFinite(a.duration)?a.duration:0,{kind:'blob',blob:f})};a.onerror=()=>toast('Ce fichier audio ne peut pas être lu')};
+$('mfbtn').onclick=()=>$('mfile').click();
+idb.all('trans').then(rs=>{transList=(rs||[]).sort((a,b)=>b.date-a.date);transList.forEach(t=>{if(t.state==='run'||t.state==='wait'){t.state='err';t.status='Interrompue : touche pour relancer'}});renderTrans()}).catch(()=>renderTrans());
 
 // Démarrage
 applySkin();drawSkins();profDraw();

@@ -2,6 +2,7 @@ package pf.brian.pehe;
 
 import android.Manifest;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -11,6 +12,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
@@ -22,6 +24,7 @@ import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -76,8 +79,9 @@ public class MusicLibraryPlugin extends Plugin {
             boolean pl = call.getBoolean("playing", false);
             long pos = (long) (call.getDouble("position", 0.0) * 1000), dur = (long) (call.getDouble("duration", 0.0) * 1000);
             float sp = call.getFloat("speed", 1f);
+            boolean rec = call.getBoolean("recording", false), bz = call.getBoolean("busy", false);
             if (PlaybackService.instance != null) {
-                PlaybackService.instance.update(t, a, pl, pos, dur, sp);
+                PlaybackService.instance.update(t, a, pl, pos, dur, sp, rec, bz);
             } else {
                 Intent i = new Intent(getContext(), PlaybackService.class).setAction(PlaybackService.ACT_UPDATE);
                 i.putExtra("title", t);
@@ -86,6 +90,8 @@ public class MusicLibraryPlugin extends Plugin {
                 i.putExtra("position", pos);
                 i.putExtra("duration", dur);
                 i.putExtra("speed", sp);
+                i.putExtra("recording", rec);
+                i.putExtra("busy", bz);
                 androidx.core.content.ContextCompat.startForegroundService(getContext(), i);
             }
             call.resolve();
@@ -230,6 +236,28 @@ public class MusicLibraryPlugin extends Plugin {
         try {
             shareUri(Uri.parse(call.getString("uri")), "audio/*", call.getString("text"));
             call.resolve();
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
+    }
+
+    /** Enregistre un fichier (Word, texte) dans Téléchargements/Pehe. */
+    @PluginMethod
+    public void saveDownload(PluginCall call) {
+        if (Build.VERSION.SDK_INT < 29) { call.reject("Android trop ancien", "OLD"); return; }
+        try {
+            byte[] data = Base64.decode(call.getString("data"), Base64.DEFAULT);
+            String name = call.getString("name", "pehe.txt").replaceAll("[\\\\/:*?\"<>|]", "_");
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.Downloads.DISPLAY_NAME, name);
+            v.put(MediaStore.Downloads.MIME_TYPE, call.getString("mime", "application/octet-stream"));
+            v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Pehe");
+            Uri u = getContext().getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (u == null) throw new Exception("Dossier Téléchargements indisponible");
+            try (OutputStream o = getContext().getContentResolver().openOutputStream(u)) { o.write(data); }
+            JSObject ret = new JSObject();
+            ret.put("uri", u.toString());
+            call.resolve(ret);
         } catch (Exception e) {
             call.reject(e.getMessage());
         }

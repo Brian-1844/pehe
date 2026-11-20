@@ -37,6 +37,8 @@ public class PlaybackService extends Service {
     private long position = 0, duration = 0;
     private float speed = 1f;
     private boolean foreground = false;
+    private boolean recording = false, busy = false;
+    private int fgType = 0;
 
     @Override
     public IBinder onBind(Intent intent) { return null; }
@@ -76,7 +78,8 @@ public class PlaybackService extends Service {
     }
 
     /** Mise à jour directe (sans relancer le service, donc permise en arrière-plan). */
-    void update(String t, String ar, boolean pl, long pos, long dur, float sp) {
+    void update(String t, String ar, boolean pl, long pos, long dur, float sp, boolean rec, boolean bz) {
+        recording = rec; busy = bz;
         title = t != null ? t : "Pehe";
         artist = ar != null ? ar : "";
         playing = pl; position = pos; duration = dur; speed = sp;
@@ -102,6 +105,8 @@ public class PlaybackService extends Service {
             position = intent.getLongExtra("position", 0);
             duration = intent.getLongExtra("duration", 0);
             speed = intent.getFloatExtra("speed", 1f);
+            recording = intent.getBooleanExtra("recording", false);
+            busy = intent.getBooleanExtra("busy", false);
         }
         refresh();
         return START_NOT_STICKY;
@@ -120,14 +125,22 @@ public class PlaybackService extends Service {
             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
             .build());
         Notification n = build();
-        if (!foreground) {
-            if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-            else startForeground(1, n);
+        int type = Build.VERSION.SDK_INT >= 29 ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK | (recording && Build.VERSION.SDK_INT >= 30 ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE : 0) : 0;
+        if (!foreground || type != fgType) {
+            try {
+                if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, type);
+                else startForeground(1, n);
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+                else startForeground(1, n);
+                type = Build.VERSION.SDK_INT >= 29 ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK : 0;
+            }
             foreground = true;
+            fgType = type;
         } else {
             getSystemService(NotificationManager.class).notify(1, n);
         }
-        if (playing) { if (!wake.isHeld()) wake.acquire(4 * 60 * 60 * 1000L); } else if (wake.isHeld()) wake.release();
+        if (playing || recording || busy) { if (!wake.isHeld()) wake.acquire(6 * 60 * 60 * 1000L); } else if (wake.isHeld()) wake.release();
     }
 
     private PendingIntent pi(String action, int code) {
@@ -140,10 +153,10 @@ public class PlaybackService extends Service {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         Intent open = getPackageManager().getLaunchIntentForPackage(getPackageName());
         b.setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle(title)
+            .setContentTitle(recording ? "● " + title : title)
             .setContentText(artist)
             .setContentIntent(PendingIntent.getActivity(this, 9, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE))
-            .setOngoing(playing)
+            .setOngoing(playing || recording || busy)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(Notification.VISIBILITY_PUBLIC)

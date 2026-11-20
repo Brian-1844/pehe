@@ -26,6 +26,13 @@ Lecteur MP3 pour Android, au thème polynésien, avec Mamahu intégré.
 ## Micro
 - Enregistrer sa voix, un son extérieur (micro brut) ou sa musique remixée ; les enregistrements sont gardés dans l'app
 
+## Réunion, cours, conversation
+- Enregistrement long, même écran éteint (service Android « micro »)
+- **Transcription en texte sur le téléphone** (moteur Whisper, modèle téléchargé une seule fois : Rapide ≈ 80 Mo ou Précis ≈ 250 Mo), en français, anglais ou détection auto
+- Barre de progression et temps restant ; texte corrigeable ; touche une heure pour réécouter le passage
+- Export **Word (.docx)** et texte (.txt), enregistrés dans Téléchargements › Pehe ou partagés
+- Transcrire aussi un fichier audio existant ou un de tes enregistrements
+
 ## Mamahu
 - Sons apaisants, battements binauraux, anti-bourdon, outils acouphènes, respiration guidée
 

@@ -17,11 +17,12 @@ perms = ('    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO
          '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n'
          '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />\n'
          '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
-         '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n')
+         '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n'
+         '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n')
 if "READ_MEDIA_AUDIO" not in m:
     m = m.replace("    <application", perms + "\n    <application", 1)
 svc = ('        <service android:name=".PlaybackService" android:exported="false"'
-       ' android:foregroundServiceType="mediaPlayback" />\n')
+       ' android:foregroundServiceType="mediaPlayback|microphone" />\n')
 if "PlaybackService" not in m:
     m = m.replace("    </application>", svc + "    </application>", 1)
 open(man, "w", encoding="utf-8").write(m)
